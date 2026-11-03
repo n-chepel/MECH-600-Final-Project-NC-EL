@@ -1,0 +1,1259 @@
+# OpenFOAM Cases — The Complete Guide
+
+[All notes](../README.md#-notes-overview) · [Previous: Note 01](01_short_intro_to_cfd.md) · [Next: Note 03](03_openfoam_dictionaries.md)
+
+> **Version scope:** Classic OpenFOAM Foundation 6, matching the project launchers.
+> Other releases/forks may need different dictionaries or executables; see
+> [version guidance](../README.md#version-and-example-scope) and the
+> [current reference cases](02_openfoam_cases.md#current-reference-cases).
+
+<details>
+<summary>Contents</summary>
+
+- [Current Reference Cases](#current-reference-cases)
+- [Case Directory Structure](#case-directory-structure)
+  - [How the Three Directories Relate](#how-the-three-directories-relate)
+- [The `0/` Directory — Initial & Boundary Conditions](#the-0-directory--initial--boundary-conditions)
+  - [The FoamFile Header](#the-foamfile-header)
+  - [The Dimensions Array](#the-dimensions-array)
+  - [internalField vs boundaryField](#internalfield-vs-boundaryfield)
+  - [Real Example — Laminar Case: Lid-Driven Cavity `0/U`](#real-example--laminar-case-lid-driven-cavity-0u)
+  - [Illustrative Alternative — Turbulent Airfoil Fields](#illustrative-alternative--turbulent-airfoil-fields)
+  - [Common Boundary Condition Types](#common-boundary-condition-types)
+- [The `constant/` Directory — Physical Properties & Mesh](#the-constant-directory--physical-properties--mesh)
+  - [transportProperties](#transportproperties)
+  - [turbulenceProperties](#turbulenceproperties)
+  - [The polyMesh/ Subdirectory — Mesh Data](#the-polymesh-subdirectory--mesh-data)
+- [The `system/` Directory — Simulation Controls](#the-system-directory--simulation-controls)
+  - [controlDict — Time & I/O Control](#controldict--time--io-control)
+  - [fvSchemes — Discretization Schemes](#fvschemes--discretization-schemes)
+  - [fvSolution — Linear Solvers & Algorithms](#fvsolution--linear-solvers--algorithms)
+- [Allrun & Allclean Scripts — Automation](#allrun--allclean-scripts--automation)
+  - [Allrun — Running the Case](#allrun--running-the-case)
+  - [Allclean — Resetting the Case](#allclean--resetting-the-case)
+- [Case Setup Workflow](#case-setup-workflow)
+  - [Step-by-Step Summary](#step-by-step-summary)
+- [Comparing Two Real Cases](#comparing-two-real-cases)
+  - [What Changes When You Go Turbulent?](#what-changes-when-you-go-turbulent)
+- [Time Directory Structure — Output During Simulation](#time-directory-structure--output-during-simulation)
+- [blockMeshDict — Structured Mesh Generation](#blockmeshdict--structured-mesh-generation)
+- [Common Pitfalls & Tips](#common-pitfalls--tips)
+  - [Pitfall #1: Patch Name Mismatch](#pitfall-1-patch-name-mismatch)
+  - [Pitfall #2: Missing Divergence Schemes](#pitfall-2-missing-divergence-schemes)
+  - [Pitfall #3: Wrong Dimensions](#pitfall-3-wrong-dimensions)
+  - [Pitfall #4: Steady-State Without Relaxation](#pitfall-4-steady-state-without-relaxation)
+  - [Pitfall #5: Not Running checkMesh](#pitfall-5-not-running-checkmesh)
+  - [Pitfall #6: Deleting `0/` By Accident](#pitfall-6-deleting-0-by-accident)
+  - [General Tips](#general-tips)
+- [Summary](#summary)
+
+</details>
+
+Everything in OpenFOAM revolves around the **case directory**. Unlike GUI-based CFD tools where
+settings hide behind menus and dialogs, OpenFOAM uses a fully file-based approach: every single
+parameter — from the velocity at an inlet to the linear solver tolerance — lives in a plain-text
+file you can read, version-control, diff, and script around.
+
+This philosophy has profound implications:
+
+- **Reproducibility** — copy a directory and you have an exact clone of your simulation.
+- **Automation** — shell scripts can set up, modify, and launch thousands of parametric runs.
+- **Transparency** — nothing is hidden; if the solver uses it, you can find it in a file.
+
+## Current Reference Cases
+
+The project files are the runnable source of truth. The notes also retain teaching
+examples of other configurations; those are labeled **illustrative alternatives**.
+In particular, the current NACA project uses Spalart–Allmaras and a Gmsh import,
+not the alternative k-epsilon/snappyHexMesh setup discussed later.
+
+| Setting | [Cavity project 01](../projects/01_lid_driven_cavity/) | [NACA project 04](../projects/04_naca_airfoil_analysis/) |
+|---|---|---|
+| Flow / solver | Laminar, transient `icoFoam` | RANS, steady `simpleFoam` |
+| Mesh generation | `blockMesh`, 20 × 20 × 1 cells | `make_mesh.sh`, `gmshToFoam`, `changeDictionary`, `renumberMesh` |
+| Initial fields | `U`, `p` | `U`, `p`, `nuTilda`, `nut` |
+| Reference speed / length | 1 m/s / 0.1 m | 50 m/s / 1 m chord |
+| Kinematic viscosity | 0.001 m²/s | 8.333333333e-06 m²/s |
+| Reynolds number | 100 | Approximately 6,000,000 |
+| Turbulence model | None | `SpalartAllmaras` |
+| Time derivative / coupling | `Euler` / PISO | `steadyState` / SIMPLE |
+| Relaxation | No factors configured | `p = 0.2`, `U = 0.3`, `nuTilda = 0.2` |
+| End / step / output interval | 0.5 s / 0.001 s / every step | Label 600 / increment 1 / every 10 iterations |
+| Velocity wall treatment | Fixed moving lid; `noSlip` fixed walls | `noSlip` airfoil; `symmetryPlane` top/bottom |
+| Turbulent viscosity at airfoil | Not applicable | `nutUSpaldingWallFunction` |
+| Stopping assessment | Physical end time; inspect transient behavior | No `residualControl` configured; inspect residuals, continuity, and stationary forces |
+
+The NACA `deltaT = 1` advances iteration labels; with `steadyState` it does not
+represent a physical second or set SIMPLE under-relaxation. Its present coarse
+mesh is a teaching/regression setup, not evidence of mesh-independent lift or drag.
+See each project's `verify.py` and README for its validation scope.
+
+Current NACA model selection, omitting the standard `FoamFile` header:
+
+```c++
+simulationType RAS;
+RAS
+{
+    RASModel SpalartAllmaras;
+    turbulence on;
+    printCoeffs on;
+}
+```
+
+For complete current dictionaries, open [NACA `constant/`](../projects/04_naca_airfoil_analysis/constant/),
+[`0/`](../projects/04_naca_airfoil_analysis/0/), and [`system/`](../projects/04_naca_airfoil_analysis/system/).
+Keep the model, fields, patch names, schemes, and solver entries consistent when
+adapting an alternative example.
+
+## Case Directory Structure
+
+Every OpenFOAM case follows the same three-directory convention. Below is a **complete** tree showing all the files you may encounter in a typical case:
+
+```
+╔════════════════════════════════════════════════════════════════════════════╗
+║                        OPENFOAM CASE DIRECTORY TREE                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+MyCase/
+│
+├── 0/                                  ◄── Initial & boundary conditions
+│   ├── U                                   Velocity field          (volVectorField)
+│   ├── p                                   Pressure field          (volScalarField)
+│   ├── k                                   Turbulent kinetic energy(volScalarField)
+│   ├── epsilon                             Turbulent dissipation   (volScalarField)
+│   ├── nut                                 Turbulent viscosity     (volScalarField)
+│   ├── omega                               Specific dissipation    (volScalarField)
+│   ├── nuTilda                             Spalart-Allmaras field  (volScalarField)
+│   └── T                                   Temperature             (volScalarField)
+│
+├── constant/                           ◄── Physical properties & mesh
+│   ├── transportProperties                 Fluid transport model & viscosity
+│   ├── turbulenceProperties                Turbulence model selection
+│   ├── thermophysicalProperties            (if heat transfer is involved)
+│   ├── g                                   Gravitational acceleration
+│   ├── polyMesh/                       ◄── Mesh data (generated by mesher)
+│   │   ├── points                          Vertex coordinates
+│   │   ├── faces                           Face-to-vertex connectivity
+│   │   ├── owner                           Face-to-owner-cell mapping
+│   │   ├── neighbour                       Face-to-neighbour-cell mapping
+│   │   └── boundary                        Patch definitions
+│   └── triSurface/                     ◄── STL/OBJ geometries for snappyHexMesh
+│       └── geometry.stl
+│
+├── system/                             ◄── Simulation controls
+│   ├── controlDict                         Time control, I/O, solver selection
+│   ├── fvSchemes                           Discretization schemes
+│   ├── fvSolution                          Linear solvers & algorithm control
+│   ├── blockMeshDict                       blockMesh configuration
+│   ├── snappyHexMeshDict                   snappyHexMesh configuration
+│   ├── decomposeParDict                    Domain decomposition for parallel
+│   ├── setFieldsDict                       Field initialization regions
+│   └── sampleDict                          Post-processing sampling
+│
+├── Allrun                              ◄── Automation: run the whole case
+├── Allclean                            ◄── Automation: reset to clean state
+│
+├── 0.1/                                ◄── Output time directories (appear after run)
+├── 0.2/
+├── ...
+└── postProcessing/                     ◄── Function object output
+```
+
+> **Key insight:** You only *create* files in `0/`, `constant/`, and `system/`. Everything
+> else (`polyMesh/` data, time directories, `postProcessing/`) is *generated* by OpenFOAM tools.
+
+### How the Three Directories Relate
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        HOW THE PIECES FIT TOGETHER                     │
+│                                                                        │
+│    ┌────────────┐     ┌──────────────────┐     ┌────────────────┐      │
+│    │    0/      │     │    constant/     │     │    system/     │      │
+│    │            │     │                  │     │                │      │
+│    │  "What are │     │  "What is the    │     │  "How do we    │      │
+│    │   the start│     │   physical       │     │   solve the    │      │
+│    │   values?" │     │   reality?"      │     │   equations?"  │      │
+│    │            │     │                  │     │                │      │
+│    │  • U, p    │     │  • viscosity     │     │  • time step   │      │
+│    │  • k, ε    │     │  • turbulence    │     │  • schemes     │      │
+│    │  • BCs     │     │  • mesh          │     │  • solvers     │      │
+│    └─────┬──────┘     └────────┬─────────┘     └───────┬────────┘      │
+│          │                     │                       │               │
+│          └─────────────────────┼───────────────────────┘               │
+│                                │                                       │
+│                                ▼                                       │
+│                     ┌──────────────────┐                               │
+│                     │     SOLVER       │                               │
+│                     │  (e.g. icoFoam,  │                               │
+│                     │   simpleFoam)    │                               │
+│                     └──────────────────┘                               │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+## The `0/` Directory — Initial & Boundary Conditions
+
+The `0/` directory (named for time = 0) holds one file per field variable. Each file specifies:
+
+1. **What the field is** — via the `FoamFile` header
+2. **The initial value everywhere** — `internalField`
+3. **Conditions on every boundary patch** — `boundaryField`
+
+### The FoamFile Header
+
+Every single OpenFOAM dictionary file starts with a standardized header:
+
+```
+FoamFile
+{
+    version     2.0;          // File format version
+    format      ascii;        // ascii or binary
+    class       volVectorField;  // Data type (see table below)
+    object      U;            // The name of this dictionary
+}
+```
+
+| `class` value       | What it holds                        | Example fields       |
+|----------------------|--------------------------------------|----------------------|
+| `volScalarField`     | One number per cell                  | `p`, `k`, `epsilon`  |
+| `volVectorField`     | Three numbers (x,y,z) per cell       | `U`                  |
+| `volSymmTensorField` | Symmetric tensor per cell            | `R` (Reynolds stress)|
+| `dictionary`         | Key-value configuration              | `controlDict`        |
+
+### The Dimensions Array
+
+OpenFOAM enforces dimensional consistency at runtime. Every field declares its units:
+
+```
+dimensions      [0 1 -1 0 0 0 0];
+//               ^  ^  ^  ^ ^ ^ ^
+//               |  |  |  | | | └─ luminous intensity (cd)
+//               |  |  |  | | └── electric current   (A)
+//               |  |  |  | └─── amount of substance (mol)
+//               |  |  |  └──── temperature          (K)
+//               |  |  └─────── time                 (s)
+//               |  └────────── length               (m)
+//               └───────────── mass                 (kg)
+```
+
+| Quantity              | Dimensions Array         | SI Unit   |
+|-----------------------|--------------------------|-----------|
+| Velocity              | `[0 1 -1 0 0 0 0]`      | m/s       |
+| Kinematic pressure    | `[0 2 -2 0 0 0 0]`      | $\mathrm{m}^2/\mathrm{s}^2$     |
+| Kinematic viscosity   | `[0 2 -1 0 0 0 0]`      | $\mathrm{m}^2/\mathrm{s}$      |
+| Turbulent kinetic energy | `[0 2 -2 0 0 0 0]`   | $\mathrm{m}^2/\mathrm{s}^2$     |
+| Turbulent dissipation (ε) | `[0 2 -3 0 0 0 0]`  | $\mathrm{m}^2/\mathrm{s}^3$     |
+| Dynamic viscosity     | `[1 -1 -1 0 0 0 0]`     | kg/(m·s)  |
+| Density               | `[1 -3 0 0 0 0 0]`      | $\mathrm{kg/m}^3$     |
+
+> **⚠ Warning:** If you get a dimensions mismatch error at runtime, check this array first.
+> A single wrong exponent (e.g., `[0 2 -1 ...]` vs `[0 2 -2 ...]`) will crash the solver.
+
+### internalField vs boundaryField
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│            HOW FIELDS MAP TO THE MESH                           │
+│                                                                 │
+│         boundaryField: "inlet"                                  │
+│         type: fixedValue ──────┐                                │
+│         value: (1 0 0)         │                                │
+│                                ▼                                │
+│    ┌─────────┬─────────┬─────────┐                              │
+│    │ (0,0,0) │ (0,0,0) │ (0,0,0) │ ◄── internalField            │
+│    ├─────────┼─────────┼─────────┤     uniform (0 0 0)          │
+│    │ (0,0,0) │ (0,0,0) │ (0,0,0) │                              │
+│    ├─────────┼─────────┼─────────┤                              │
+│    │ (0,0,0) │ (0,0,0) │ (0,0,0) │                              │
+│    └─────────┴─────────┴────┬────┘                              │
+│                              │                                  │
+│                              ▼                                  │
+│                boundaryField: "outlet"                          │
+│                type: zeroGradient                               │
+│                (value extrapolated from interior)               │
+│                                                                 │
+│    ─── Top: "movingWall" (fixedValue) ───                       │
+│    ─── Left/Right/Bottom: "fixedWalls" (noSlip) ───             │
+│    ─── Front/Back: "empty" (2D simulation) ───                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**`internalField`** sets the value inside every cell at `t = 0`.
+
+- `uniform (0 0 0)` — same value everywhere (most common).
+- `nonuniform List<vector> ...` — different value per cell (rare at startup).
+
+**`boundaryField`** assigns a condition to each named patch in the mesh.
+
+- Every patch defined in `constant/polyMesh/boundary` **must** appear here.
+
+### Real Example — Laminar Case: Lid-Driven Cavity `0/U`
+
+*Source: `projects/01_lid_driven_cavity/0/U`*
+
+```c++
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    movingWall
+    {
+        type            fixedValue;
+        value           uniform (1 0 0);       // Lid moves at 1 m/s in x
+    }
+
+    fixedWalls
+    {
+        type            noSlip;                // Zero velocity (no-slip condition)
+    }
+
+    frontAndBack
+    {
+        type            empty;                 // 2D simulation — no flow in z
+    }
+}
+```
+
+And the corresponding pressure field (`projects/01_lid_driven_cavity/0/p`):
+
+```c++
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
+{
+    movingWall
+    {
+        type            zeroGradient;
+    }
+
+    fixedWalls
+    {
+        type            zeroGradient;
+    }
+
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+```
+
+> **Note:** For incompressible solvers like `icoFoam`, pressure has dimensions `[0 2 -2 ...]`
+> (kinematic pressure, p/ρ). For compressible solvers, it would be `[1 -1 -2 ...]` (Pascals).
+
+<a id="real-example--turbulent-case-naca-airfoil-0u"></a>
+
+### Illustrative Alternative — Turbulent Airfoil Fields
+
+*Illustrative k-epsilon alternative: `0/U`; not a current project-file excerpt.*
+
+```c++
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    inlet
+    {
+        type            fixedValue;
+        value           uniform (1 0 0);       // Freestream velocity
+    }
+
+    outlet
+    {
+        type            zeroGradient;          // Extrapolate from interior
+    }
+
+    walls
+    {
+        type            noSlip;                // Tunnel walls
+    }
+
+    airfoil
+    {
+        type            noSlip;                // Airfoil surface — no-slip
+    }
+
+    frontAndBack
+    {
+        type            empty;                 // 2D simulation
+    }
+}
+```
+
+A k-epsilon case also requires **additional field files**; SA instead uses `nuTilda` and `nut`. Here is `0/k` (turbulent kinetic energy):
+
+*Illustrative k-epsilon alternative: `0/k`; not a current project-file excerpt.*
+
+```c++
+dimensions      [0 2 -2 0 0 0 0];
+internalField   uniform 0.01;
+
+boundaryField
+{
+    inlet
+    {
+        type            fixedValue;
+        value           uniform 0.01;
+    }
+    outlet
+    {
+        type            zeroGradient;
+    }
+    walls
+    {
+        type            kqRWallFunction;       // Wall function for k
+        value           uniform 0.01;
+    }
+    airfoil
+    {
+        type            kqRWallFunction;       // Wall function on airfoil
+        value           uniform 0.01;
+    }
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+```
+
+And `0/nut` (turbulent eddy viscosity):
+
+*Illustrative k-epsilon alternative: `0/nut`; not a current project-file excerpt.*
+
+```c++
+dimensions      [0 2 -1 0 0 0 0];
+internalField   uniform 0;
+
+boundaryField
+{
+    inlet
+    {
+        type            calculated;            // Computed from k and epsilon
+        value           uniform 0;
+    }
+    outlet
+    {
+        type            calculated;
+        value           uniform 0;
+    }
+    walls
+    {
+        type            nutkWallFunction;      // Wall function for nut
+        value           uniform 0;
+    }
+    airfoil
+    {
+        type            nutkWallFunction;
+        value           uniform 0;
+    }
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+```
+
+### Common Boundary Condition Types
+
+| BC Type              | What It Does                                    | Typical Use                |
+|----------------------|-------------------------------------------------|----------------------------|
+| `fixedValue`         | Sets a constant value on the patch              | Inlet velocity             |
+| `zeroGradient`       | Zero normal gradient (extrapolates from inside)  | Outlet pressure            |
+| `noSlip`             | Sets velocity to zero                           | Solid walls                |
+| `empty`              | Removes a dimension (makes 2D/1D)               | Front/back of 2D cases     |
+| `symmetryPlane`      | Mirror symmetry condition                       | Symmetry planes            |
+| `totalPressure`      | Fixed total pressure (adjusts with velocity)     | Pressure inlets            |
+| `fixedGradient`      | Sets a constant normal gradient                 | Heat flux walls            |
+| `kqRWallFunction`    | Wall function for turbulent k                   | Turbulent walls            |
+| `epsilonWallFunction`| Wall function for turbulent ε                   | Turbulent walls            |
+| `nutkWallFunction`   | Wall function for turbulent νt                  | Turbulent walls            |
+| `calculated`         | Derived from other fields                       | νt at inlet/outlet         |
+
+## The `constant/` Directory — Physical Properties & Mesh
+
+The `constant/` directory defines the unchanging physical reality of your simulation: what fluid you are simulating, what turbulence model you are using, and the mesh geometry.
+
+### transportProperties
+
+This file tells OpenFOAM what kind of fluid model to use and its properties.
+
+*Source: `projects/01_lid_driven_cavity/constant/transportProperties`*
+
+```c++
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      transportProperties;
+}
+
+transportModel  Newtonian;
+
+nu              [0 2 -1 0 0 0 0] 0.001;
+```
+
+Compare with the NACA airfoil case (`projects/04_naca_airfoil_analysis/constant/transportProperties`):
+
+```c++
+transportModel  Newtonian;
+
+nu              nu [ 0 2 -1 0 0 0 0 ] 8.333333333e-06;
+```
+
+> **Tip:** The viscosity value determines the Reynolds number: `Re = U·L / ν`.
+> - Cavity: `ν = 0.001` → with `U=1`, `L=0.1` → Re = 100 (laminar)
+> - Current airfoil: `ν = 8.333333333e-06`, `U=50`, `L=1` → Re ≈ 6,000,000 (RANS setup).
+
+### turbulenceProperties
+
+This file selects the turbulence approach in solvers that instantiate a turbulence model,
+including their `laminar` mode. Stock `icoFoam` 6 does not read it.
+
+*Illustrative k-epsilon alternative. The current SA selection is shown in [Current Reference Cases](#current-reference-cases).*
+
+```c++
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      turbulenceProperties;
+}
+
+simulationType  RAS;
+
+RAS
+{
+    RASModel        kEpsilon;
+
+    turbulence      on;
+
+    printCoeffs     on;
+
+    kEpsilonCoeffs
+    {
+        Cmu             0.09;
+        C1              1.44;
+        C2              1.92;
+        sigmak          1.0;
+        sigmaEps        1.3;
+    }
+}
+```
+
+| Keyword          | Options / Meaning                                        |
+|------------------|----------------------------------------------------------|
+| `simulationType` | `laminar`, `RAS` (RANS), or `LES`                        |
+| `RASModel`       | `kEpsilon`, `kOmegaSST`, `SpalartAllmaras`, etc.         |
+| `turbulence`     | `on` / `off` — master switch                             |
+| `printCoeffs`    | Print model coefficients at startup                      |
+
+### The polyMesh/ Subdirectory — Mesh Data
+
+After running a meshing tool (`blockMesh`, `snappyHexMesh`, or importing), the mesh is stored in `constant/polyMesh/`. You rarely edit these files by hand — they are generated.
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                  HOW MESH DATA IS STRUCTURED IN polyMesh/                    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  points           faces             owner / neighbour        boundary
+  ──────           ─────             ─────────────────        ────────
+  Vertex           Face-to-vertex    Face-to-cell             Patch
+  coordinates      connectivity      connectivity             definitions
+
+  (0 0 0)          face0: (0 1 5 4)  owner[0] = cell0         inlet
+  (1 0 0)          face1: (1 2 6 5)  neighbour[0] = cell1     { type patch;
+  (1 1 0)          face2: (0 3 7 4)  owner[1] = cell0           startFace 200;
+  (0 1 0)          ...               neighbour[1] = cell2       nFaces 10; }
+  ...                                ...
+
+         Points ──► Faces ──► Cells
+            │          │         │
+            ▼          ▼         ▼
+  ┌─────────────────────────────────────────────────────┐
+  │                                                     │
+  │     3 ─────────── 2          A single hex cell:     │
+  │    /|            /|          • 8 points (vertices)  │
+  │   / |           / |          • 6 faces              │
+  │  7 ─────────── 6  |          • Each face has an     │
+  │  |  |          |  |            owner cell and       │
+  │  |  0 ─────────|── 1           (optionally) a       │
+  │  | /           | /             neighbour cell       │
+  │  |/            |/                                   │
+  │  4 ─────────── 5            Internal faces: shared  │
+  │                              between two cells      │
+  │                             Boundary faces: belong  │
+  │                              to one cell only       │
+  └─────────────────────────────────────────────────────┘
+```
+
+| File        | Contents                                                        |
+|-------------|------------------------------------------------------------------|
+| `points`    | List of `(x y z)` coordinates for every vertex                  |
+| `faces`     | Each face is an ordered list of vertex indices                   |
+| `owner`     | For each face, the index of the cell that "owns" it              |
+| `neighbour` | For each internal face, the index of the neighbouring cell       |
+| `boundary`  | Defines named patches: their type, starting face index, and count|
+
+> **Tip:** Run `checkMesh` after generating your mesh. It validates topology, geometry,
+> non-orthogonality, skewness, and aspect ratio. Fix mesh issues *before* running the solver.
+
+## The `system/` Directory — Simulation Controls
+
+The `system/` directory is the brain of the simulation. Three files are **mandatory** for every case: `controlDict`, `fvSchemes`, and `fvSolution`.
+
+### controlDict — Time & I/O Control
+
+```
+╔═════════════════════════════════════════════════════════════════════════════╗
+║                     WHAT controlDict CONTROLS                               ║
+╠═════════════════════════════════════════════════════════════════════════════╣
+║                                                                             ║
+║   ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐  ┌────────────┐    ║
+║   │ Which solver│  │  Start/stop  │  │  Time stepping  │  │   Output   │    ║
+║   │  to use     │  │    times     │  │   (deltaT)      │  │  control   │    ║
+║   └──────┬──────┘  └──────┬───────┘  └───────┬─────────┘  └─────┬──────┘    ║
+║          │                │                   │                  │          ║
+║          ▼                ▼                   ▼                  ▼          ║
+║     application      startFrom/           deltaT            writeControl    ║
+║                      stopAt/                                writeInterval   ║
+║                      endTime                                purgeWrite      ║
+╚═════════════════════════════════════════════════════════════════════════════╝
+```
+
+**Laminar case** — `projects/01_lid_driven_cavity/system/controlDict`:
+
+```c++
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+
+application     icoFoam;
+
+startFrom       startTime;
+startTime       0;
+
+stopAt          endTime;
+endTime         0.5;
+
+deltaT          0.001;
+
+writeControl    timeStep;
+writeInterval   1;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+writePrecision  6;
+writeCompression off;
+
+timeFormat      general;
+timePrecision   6;
+
+runTimeModifiable true;
+```
+
+**Turbulent (steady-state) case** — `projects/04_naca_airfoil_analysis/system/controlDict`:
+
+```c++
+application     simpleFoam;
+
+startFrom       startTime;
+startTime       0;
+
+stopAt          endTime;
+endTime         600;
+
+deltaT          1;
+
+writeControl    timeStep;
+writeInterval   10;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+writePrecision  6;
+writeCompression off;
+
+timeFormat      general;
+timePrecision   6;
+
+runTimeModifiable true;
+```
+
+#### controlDict Keyword Reference
+
+| Keyword              | Options / Meaning                                                         |
+|----------------------|---------------------------------------------------------------------------|
+| `application`        | Solver name: `icoFoam`, `simpleFoam`, `pimpleFoam`, etc.                 |
+| `startFrom`          | `firstTime`, `startTime`, `latestTime`                                    |
+| `startTime`          | Numeric start time (used when `startFrom` is `startTime`)                 |
+| `stopAt`             | `endTime`, `writeNow`, `noWriteNow`, `nextWrite`                         |
+| `endTime`            | Numeric end time                                                          |
+| `deltaT`             | Physical time step, or iteration-label increment for steadyState                     |
+| `writeControl`       | `timeStep`, `runTime`, `adjustableRunTime`, `cpuTime`, `clockTime`       |
+| `writeInterval`      | How often to write (units depend on `writeControl`)                       |
+| `purgeWrite`         | Keep only the last N time directories (0 = keep all)                      |
+| `writeFormat`        | `ascii` or `binary`                                                       |
+| `writePrecision`     | Number of significant digits                                              |
+| `writeCompression`   | `on` / `off` — gzip compression of output files                          |
+| `runTimeModifiable`  | `true` / `false` — re-read dictionaries at each time step                |
+
+### fvSchemes — Discretization Schemes
+
+`fvSchemes` tells OpenFOAM *how* to approximate the continuous differential equations on the discrete mesh. Each category of mathematical operation gets its own sub-dictionary.
+
+**Laminar case** — `projects/01_lid_driven_cavity/system/fvSchemes`:
+
+```c++
+ddtSchemes
+{
+    default         Euler;                     // First-order implicit time
+}
+
+gradSchemes
+{
+    default         Gauss linear;              // Green-Gauss with linear interpolation
+    grad(p)         Gauss linear;
+    grad(U)         cellLimited Gauss linear 1;
+}
+
+divSchemes
+{
+    default         none;
+    div(phi,U)      Gauss linearUpwind grad(U); // Second-order upwind
+}
+
+laplacianSchemes
+{
+    default         Gauss linear corrected;    // Central differencing + correction
+}
+
+interpolationSchemes
+{
+    default         linear;                    // Linear (central) interpolation
+}
+
+snGradSchemes
+{
+    default         corrected;                 // Non-orthogonal correction
+}
+```
+
+**Illustrative k-epsilon alternative — `fvSchemes`** (not the current NACA dictionary):
+
+```c++
+ddtSchemes
+{
+    default         steadyState;               // No time derivative (SIMPLE)
+}
+
+gradSchemes
+{
+    default         Gauss linear;
+}
+
+divSchemes
+{
+    default         none;
+    div(phi,U)      Gauss linearUpwind grad(U);
+    div((nuEff*dev(T(grad(U))))) Gauss linear;
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+    div(phi,epsilon) Gauss upwind;             // First-order for turbulence
+    div(phi,k) Gauss upwind;                   // First-order for turbulence
+}
+
+laplacianSchemes
+{
+    default         Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         corrected;
+}
+
+fluxRequired
+{
+    default         no;
+    p;                                         // Pressure needs flux
+}
+```
+
+#### Scheme Categories Explained
+
+| Category               | What It Discretizes                            | Common Choices               |
+|------------------------|------------------------------------------------|------------------------------|
+| `ddtSchemes`           | Time derivatives (∂/∂t)                        | `Euler`, `backward`, `CrankNicolson`, `steadyState` |
+| `gradSchemes`          | Gradient operator (∇)                          | `Gauss linear`, `leastSquares`, `cellLimited Gauss linear` |
+| `divSchemes`           | Divergence / convection (∇·)                   | `Gauss upwind`, `Gauss linearUpwind`, `Gauss LUST` |
+| `laplacianSchemes`     | Laplacian operator (∇²)                        | `Gauss linear corrected`, `Gauss linear uncorrected` |
+| `interpolationSchemes` | Cell-to-face interpolation                     | `linear`, `upwind`           |
+| `snGradSchemes`        | Surface-normal gradient                        | `corrected`, `uncorrected`, `limited` |
+| `fluxRequired`         | Fields that need face flux computation          | Usually just `p`             |
+
+> **⚠ Warning:** Setting `divSchemes { default none; }` means you must explicitly specify a
+> scheme for *every* divergence term. Missing one will crash the solver with a "no entry" error.
+
+### fvSolution — Linear Solvers & Algorithms
+
+`fvSolution` controls *how* the discretized equations are solved: which linear solver to use
+for each variable, convergence tolerances, and the pressure-velocity coupling algorithm.
+
+**Laminar case** — `projects/01_lid_driven_cavity/system/fvSolution`:
+
+```c++
+solvers
+{
+    p
+    {
+        solver          PCG;                   // Preconditioned Conjugate Gradient
+        preconditioner  DIC;                   // Diagonal Incomplete-Cholesky
+        tolerance       1e-06;
+        relTol          0.05;
+    }
+
+    pFinal
+    {
+        $p;                                    // Inherits all settings from p
+        relTol          0;                     // Requires absolute tolerance (or maxIter)
+    }
+
+    U
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-05;
+        relTol          0;
+    }
+}
+
+PISO
+{
+    nCorrectors     2;                         // Pressure correction loops
+    nNonOrthogonalCorrectors 0;                // Extra corrections for skewed meshes
+    pRefCell        0;                         // Reference pressure cell
+    pRefValue       0;                         // Reference pressure value
+}
+```
+
+**Illustrative k-epsilon alternative — `fvSolution`** (not the current NACA dictionary):
+
+```c++
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-06;
+        relTol          0.05;
+    }
+
+    U
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-05;
+        relTol          0.1;
+    }
+
+    k
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-05;
+        relTol          0.1;
+    }
+
+    epsilon
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-05;
+        relTol          0.1;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+    consistent yes;                            // SIMPLEC variant
+    residualControl
+    {
+        p       1e-3;
+        U       1e-4;
+        "(k|epsilon)" 1e-4;
+    }
+}
+
+relaxationFactors
+{
+    fields
+    {
+        p       0.3;                           // Under-relax pressure
+    }
+    equations
+    {
+        U       0.7;                           // Under-relax momentum
+        k       0.7;
+        epsilon 0.7;
+    }
+}
+```
+
+#### Pressure-Velocity Coupling Algorithms
+
+| Algorithm | Solver Type   | Time Accuracy | Key Settings                                |
+|-----------|---------------|---------------|---------------------------------------------|
+| `SIMPLE`  | Steady-state  | N/A           | `relaxationFactors`, `residualControl`      |
+| `PISO`    | Transient     | 1st/2nd order | `nCorrectors`, `nNonOrthogonalCorrectors`   |
+| `PIMPLE`  | Transient     | 1st/2nd order | Combines SIMPLE outer + PISO inner loops    |
+
+> **Tip:** For steady-state SIMPLE cases, relaxation factors are crucial. Start with
+> `p = 0.3`, `U = 0.7`. If diverging, lower them. If converging too slowly, raise them slightly.
+
+## Allrun & Allclean Scripts — Automation
+
+These shell scripts are the standard way to automate case execution and cleanup in OpenFOAM.
+
+### Allrun — Running the Case
+
+*Annotated automation example based on the elbow workflow; inspect
+[`Allrun`](../projects/02_elbow/Allrun) before running the current case.*
+
+```bash
+#!/bin/sh
+cd "${0%/*}" || exit 1    # Run from this directory
+
+# Source tutorial run functions
+. "${WM_PROJECT_DIR:?}/bin/tools/RunFunctions"
+
+# Get application directory
+application=$(getApplication)
+
+runApplication fluentMeshToFoam elbow.msh
+runApplication "$application"
+runApplication foamMeshToFluent
+runApplication foamDataToFluent
+```
+
+**Utilities from `RunFunctions`:**
+
+| Function            | What It Does                                                   |
+|---------------------|----------------------------------------------------------------|
+| `runApplication`    | Runs a command, logs to `log.<command>`, fails if log exists    |
+| `runParallel`       | Runs with `mpirun`, logs to `log.<command>`                    |
+| `getApplication`    | Reads `application` keyword from `system/controlDict`          |
+| `getNumberOfProcessors` | Reads processor count from `system/decomposeParDict`     |
+| `restore0Dir`       | Copies `0.orig` to `0` (useful when `0/` gets overwritten)    |
+
+### Allclean — Resetting the Case
+
+*Illustrative cleanup example; it deletes generated results. Inspect the
+current [`Allclean`](../projects/02_elbow/Allclean) and preserve any results you need.*
+
+```bash
+#!/bin/sh
+cd "${0%/*}" || exit 1    # Run from this directory
+
+# Source tutorial clean functions
+. "${WM_PROJECT_DIR:?}/bin/tools/CleanFunctions"
+
+rm -f constant/polyMesh/boundary > /dev/null 2>&1
+rm -rf fluentInterface
+cleanCase
+```
+
+The `cleanCase` function removes all generated data: time directories, `log.*` files, processor directories, `postProcessing/`, and temporary files.
+
+> **Best practice:** Always provide both `Allrun` and `Allclean`. Anyone (including future you)
+> should be able to run `./Allclean && ./Allrun` to reproduce your simulation from scratch.
+
+## Case Setup Workflow
+
+Setting up a new OpenFOAM case follows a well-defined sequence. Here is the complete workflow:
+
+```
+╔════════════════════════════════════════════════════════════════════════════╗
+║                     OPENFOAM CASE SETUP WORKFLOW                           ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  ┌──────────────┐     ┌──────────────┐     ┌──────────────────────────┐    ║
+║  │  1. DEFINE   │     │  2. GENERATE │     │  3. SET INITIAL &        │    ║
+║  │   GEOMETRY   │────►│     MESH     │────►│   BOUNDARY CONDITIONS    │    ║
+║  │              │     │              │     │                          │    ║
+║  │ blockMeshDict│     │ blockMesh or │     │ Edit files in 0/         │    ║
+║  │ STL files    │     │ snappyHexMesh│     │ U, p, k, epsilon, nut    │    ║
+║  └──────────────┘     └──────────────┘     └────────────┬─────────────┘    ║
+║                                                         │                  ║
+║                                                         ▼                  ║
+║  ┌──────────────┐     ┌──────────────┐     ┌──────────────────────────┐    ║
+║  │  6. POST-    │     │  5. RUN THE  │     │  4. CONFIGURE PHYSICS    │    ║
+║  │   PROCESS    │◄────│    SOLVER    │◄────│     & NUMERICS           │    ║
+║  │              │     │              │     │                          │    ║
+║  │ ParaView     │     │ icoFoam,     │     │ transportProperties      │    ║
+║  │ postProcess  │     │ simpleFoam,  │     │ turbulenceProperties     │    ║
+║  │              │     │ pimpleFoam   │     │ controlDict, fvSchemes   │    ║
+║  └──────────────┘     └──────────────┘     │ fvSolution               │    ║
+║                                            └──────────────────────────┘    ║
+║                                                                            ║
+║  Iterate: check results → adjust mesh/BCs/numerics → re-run                ║
+╚════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Step-by-Step Summary
+
+1. **Define Geometry** — Write a `blockMeshDict` for simple geometries, or prepare STL files and a `snappyHexMeshDict` for complex ones.
+2. **Generate Mesh** — Run `blockMesh` or `snappyHexMesh`. Always run `checkMesh` afterward.
+3. **Set Initial & Boundary Conditions** — Create field files in `0/` for every variable. Make sure every patch in `constant/polyMesh/boundary` has a corresponding entry.
+4. **Configure Physics & Numerics** — Set up `transportProperties`, `turbulenceProperties`, `controlDict`, `fvSchemes`, and `fvSolution`.
+5. **Run the Solver** — Execute the application specified in `controlDict`.
+6. **Post-process** — Open results in ParaView (`paraFoam`) or use `postProcess` utilities.
+
+## Comparing Two Real Cases
+
+The [current reference table](#current-reference-cases) compares every setting from
+the original laminar-versus-turbulent overview: flow type, solver, time treatment,
+mesh, fields, viscosity, Reynolds number, model, discretization, coupling,
+relaxation, run length, time step, and wall conditions. It reflects the checked-in
+projects rather than the illustrative k-epsilon alternative.
+
+### What Changes When You Go Turbulent?
+
+Going from a laminar to a turbulent simulation adds several layers of complexity:
+
+1. **More field files** — Use the selected model’s fields: `k`, `epsilon`, `nut` for k-epsilon; `k`, `omega`, `nut` for SST; `nuTilda`, `nut` for SA.
+2. **Wall treatment** — Keep `noSlip` for stationary-wall velocity. Apply model- and mesh-appropriate wall conditions to turbulence fields (for example `kqRWallFunction`, `epsilonWallFunction`, `nutkWallFunction`).
+3. **turbulenceProperties** — A new file in `constant/` selecting the RANS model.
+4. **Extra divergence schemes** — Add convection entries for the selected model’s transported fields, e.g. `div(phi,k)` and `div(phi,epsilon)` or `div(phi,nuTilda)`, plus the stress term requested by the solver.
+5. **Extra linear solvers** — Add entries for the selected model’s transported fields; the current airfoil solves `nuTilda`.
+6. **Relaxation factors** — Steady-state SIMPLE requires under-relaxation to stabilize.
+
+## Time Directory Structure — Output During Simulation
+
+As the solver runs, it writes field data to numbered directories corresponding to simulation
+time (or iteration number for steady-state solvers):
+
+```
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   TIME DIRECTORIES DURING A RUN                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+Before running:                 After running (transient):
+─────────────────               ──────────────────────────
+MyCase/                         MyCase/
+├── 0/                          ├── 0/           ◄ initial conditions
+│   ├── U                       ├── 0.001/       ◄ t = 0.001 s
+│   └── p                       │   ├── U
+├── constant/                   │   ├── p
+│   └── ...                     │   └── phi      ◄ face flux (auto-generated)
+└── system/                     ├── 0.002/       ◄ t = 0.002 s
+    └── ...                     │   ├── U
+                                │   ├── p
+                                │   └── phi
+                                ├── ...
+                                ├── 0.5/         ◄ final time
+                                │   ├── U
+                                │   └── p
+                                ├── constant/
+                                ├── system/
+                                └── log.icoFoam  ◄ solver log
+```
+
+**Points about time directories:**
+
+- Each time directory has the **same structure as `0/`** — one file per field.
+- The solver may also write derived fields like `phi` (face flux) that were not in `0/`.
+- Use `purgeWrite N` in `controlDict` to keep only the last N time directories (saves disk space).
+- For steady-state SIMPLE, the "time" directories are iteration numbers (e.g., `100/`, `200/`).
+- The `latestTime` option in `startFrom` lets you restart from the most recent time directory.
+
+> **Tip:** Large 3D transient simulations can generate terabytes of data. Use `purgeWrite`,
+> `writeControl adjustableRunTime`, and `binary` format to manage disk usage.
+
+## blockMeshDict — Structured Mesh Generation
+
+For simple geometries, `blockMesh` is the go-to meshing tool. The configuration lives in `system/blockMeshDict`.
+
+*Source: `projects/01_lid_driven_cavity/system/blockMeshDict`*
+
+```c++
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+
+convertToMeters 0.1;
+
+vertices
+(
+    (0 0 0)        // vertex 0
+    (1 0 0)        // vertex 1
+    (1 1 0)        // vertex 2
+    (0 1 0)        // vertex 3
+    (0 0 0.1)      // vertex 4
+    (1 0 0.1)      // vertex 5
+    (1 1 0.1)      // vertex 6
+    (0 1 0.1)      // vertex 7
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) (20 20 1) simpleGrading (1 1 1)
+    //  ─────────────────  ────────  ──────────────────────
+    //   vertex ordering    cells     grading (1=uniform)
+    //   (defines the hex)  (nx ny nz)
+);
+
+edges
+(
+);
+
+boundary
+(
+    movingWall
+    {
+        type wall;
+        faces
+        (
+            (3 7 6 2)          // Top face — the moving lid
+        );
+    }
+    fixedWalls
+    {
+        type wall;
+        faces
+        (
+            (0 4 7 3)          // Left wall
+            (2 6 5 1)          // Right wall
+            (1 5 4 0)          // Bottom wall
+        );
+    }
+    frontAndBack
+    {
+        type empty;
+        faces
+        (
+            (0 3 2 1)          // Front (z = 0)
+            (4 5 6 7)          // Back  (z = 0.1)
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+```
+
+> **Note:** `convertToMeters 0.1` means all vertex coordinates are multiplied by 0.1.
+> So vertex `(1 1 0)` becomes `(0.1 0.1 0)` in meters — a 0.1 m × 0.1 m cavity.
+
+## Common Pitfalls & Tips
+
+### Pitfall #1: Patch Name Mismatch
+Every patch defined in `constant/polyMesh/boundary` must have a matching entry in every field file in `0/`. A typo (`Wall` vs `wall` vs `walls`) will crash the solver immediately.
+
+### Pitfall #2: Missing Divergence Schemes
+If `divSchemes { default none; }`, you must list every divergence term explicitly. For turbulent cases, forgetting `div(phi,k)` or `div(phi,epsilon)` is a common error.
+
+### Pitfall #3: Wrong Dimensions
+The dimensions array is checked at runtime. A velocity field with `[0 2 -1 ...]` instead of `[0 1 -1 ...]` will give a cryptic dimensions mismatch error.
+
+### Pitfall #4: Steady-State Without Relaxation
+SIMPLE often needs under-relaxation for robust convergence. Choose factors in `fvSolution` based on the coupled problem; convergence without relaxation is possible, and no factor guarantees convergence.
+
+### Pitfall #5: Not Running checkMesh
+Skipping `checkMesh` after meshing is like skipping tests after coding. Non-orthogonality, skewness, and negative cell volumes will silently degrade your results or crash the solver.
+
+### Pitfall #6: Deleting `0/` By Accident
+Some meshing tools (especially `snappyHexMesh`) overwrite fields in `0/`. Best practice: keep your initial conditions in `0.orig/` and use `restore0Dir` in your `Allrun` script.
+
+### General Tips
+
+> **💡 Start simple, then add complexity.** Get a coarse mesh running with first-order schemes
+> before refining the mesh and switching to second-order. Debug on a cheap case.
+
+> **💡 Use `foamLog` to extract residuals** from the solver log and plot convergence history.
+> Residuals that plateau or oscillate indicate a problem with mesh, BCs, or numerics.
+
+> **💡 Version-control your cases with Git.** Add `*.gz`, `processor*`, and numbered time
+> directories to `.gitignore`. Track only `0/`, `constant/`, `system/`, and scripts.
+
+> **💡 Read the solver source code.** OpenFOAM is open source. If the documentation is unclear,
+> `grep -r "keyword" $FOAM_SRC` will show you exactly how a keyword is used.
+
+## Summary
+
+```
+╔════════════════════════════════════════════════════════════════════════════╗
+║                         OPENFOAM CASE CHEAT SHEET                          ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  Directory    File                    Purpose                              ║
+║  ─────────    ────                    ───────                              ║
+║  0/           U                       Velocity initial & boundary conds    ║
+║               p                       Pressure initial & boundary conds    ║
+║               k, epsilon, nut, ...    Turbulence fields (if turbulent)     ║
+║                                                                            ║
+║  constant/    transportProperties     Fluid model & viscosity              ║
+║               turbulenceProperties    Turbulence model selection           ║
+║               polyMesh/               Mesh data (generated)                ║
+║                                                                            ║
+║  system/      controlDict             Time, I/O, solver selection          ║
+║               fvSchemes               Discretization schemes               ║
+║               fvSolution              Linear solvers & P-V coupling        ║
+║               blockMeshDict           Mesh generation (blockMesh)          ║
+║               snappyHexMeshDict       Mesh generation (snappyHexMesh)      ║
+║               decomposeParDict        Parallel decomposition               ║
+║                                                                            ║
+║  Scripts      Allrun                  Automate the full workflow           ║
+║               Allclean                Reset case to clean state            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+```
