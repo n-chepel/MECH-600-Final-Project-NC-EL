@@ -33,8 +33,8 @@ boundaryField
 
     ground
     {
-        type            omegaWallFunction;
-        value           uniform 90;
+        type omegaWallFunction;
+        value   $internalField;
     }
 
     top
@@ -54,8 +54,8 @@ boundaryField
 
     ahmed_body
     {
-        type            omegaWallFunction;
-        value           uniform 90;
+        type omegaWallFunction;
+        value   $internalField;
     }
 }
 

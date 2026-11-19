@@ -1,0 +1,37 @@
+#!/bin/bash
+#------------------------------------------------------------------------------
+# Allrun: Ahmed body, simpleFoam + kOmegaSST, snappyHexMesh, MPI parallel.
+# The mesh is generated in parallel, reconstructed, checked in serial and then
+# decomposed again together with the 0/ fields (the first decomposition only
+# serves snappyHexMesh and does not know the ahmed_body patch).
+#------------------------------------------------------------------------------
+cd "${0%/*}" || exit
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions
+
+echo "Step 1: background mesh (blockMesh)"
+runApplication blockMesh
+
+echo "Step 2: feature edges (surfaceFeatureExtract)"
+runApplication surfaceFeatureExtract
+
+echo "Step 3: decompose background mesh"
+runApplication decomposePar
+
+echo "Step 4: snappyHexMesh (parallel)"
+runParallel snappyHexMesh -overwrite
+
+echo "Step 5: reconstruct mesh and check it (serial)"
+runApplication reconstructParMesh -constant
+rm -rf processor*
+runApplication checkMesh
+
+echo "Step 6: decompose mesh and fields, run $(getApplication) (parallel)"
+mv log.decomposePar log.decomposePar.mesh
+runApplication decomposePar
+runParallel $(getApplication)
+
+echo "Step 7: reconstruct last time"
+runApplication reconstructPar -latestTime
+
+echo "Done. Force coefficients: postProcessing/forceCoeffs/0/"
+echo "Check results with: python3 verify.py"

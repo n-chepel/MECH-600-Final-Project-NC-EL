@@ -1,0 +1,49 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  6                                     |
+|   \\  /    A nd           | Website:  www.openfoam.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes   { default steadyState; }
+
+gradSchemes
+{
+    default     Gauss linear;
+    grad(U)     Gauss linear;
+    grad(k)     Gauss linear;
+    grad(epsilon) Gauss linear;
+}
+
+divSchemes
+{
+    default         none;
+    div(phi,U)      Gauss linearUpwind grad(U);
+    div(phi,k)      Gauss upwind;
+    div(phi,epsilon) Gauss upwind;
+    div(nonlinearStress)  Gauss linear;
+
+    // Viscous stress divergence — use dev2 in OF5+ Foundation / ESI:
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+    // For older OF (pre-v5): div((nuEff*dev(T(grad(U))))) Gauss linear;
+}
+
+laplacianSchemes { default Gauss linear corrected; }
+interpolationSchemes { default linear; }
+snGradSchemes    { default corrected; }
+
+wallDist
+{
+    method          meshWave;
+}
+
+// ************************************************************************* //

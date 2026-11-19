@@ -34,7 +34,7 @@ boundaryField
 
     ground
     {
-        type            nutkWallFunction;
+        type            fixedValue;
         value           uniform 0;
     }
 
@@ -55,7 +55,7 @@ boundaryField
 
     ahmed_body
     {
-        type            nutkWallFunction;
+        type            fixedValue;
         value           uniform 0;
     }
 }

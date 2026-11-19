@@ -126,17 +126,17 @@ addLayersControls
     {
         "ahmed_body.*"
         {
-            nSurfaceLayers 5;
+            nSurfaceLayers 20;
         }
         ground
         {
-            nSurfaceLayers 3;
+            nSurfaceLayers 12;
         }
     }
 
     expansionRatio          1.2;
     finalLayerThickness     0.5;
-    minThickness            0.1;
+    minThickness            0.01;
     nGrow                   0;
     featureAngle            130;
     slipFeatureAngle        30;
@@ -148,7 +148,7 @@ addLayersControls
     maxThicknessToMedialRatio 0.3;
     minMedialAxisAngle      90;
     nBufferCellsNoExtrude   0;
-    nLayerIter              50;
+    nLayerIter              100;
 }
 
 meshQualityControls

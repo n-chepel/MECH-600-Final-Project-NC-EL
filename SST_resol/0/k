@@ -33,8 +33,8 @@ boundaryField
 
     ground
     {
-        type            kqRWallFunction;
-        value           uniform 0.24;
+        type            fixedValue;
+        value           uniform 0;
     }
 
     top
@@ -54,8 +54,8 @@ boundaryField
 
     ahmed_body
     {
-        type            kqRWallFunction;
-        value           uniform 0.24;
+        type            fixedValue;
+        value           uniform 0;
     }
 }
 

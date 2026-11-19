@@ -47,6 +47,7 @@ runTimeModifiable true;
 functions
 {
     #include "forceCoeffs"
+    #include "fieldResiduals"
     #includeFunc yPlus
 }
 

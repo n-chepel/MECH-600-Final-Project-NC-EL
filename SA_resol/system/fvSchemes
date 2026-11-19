@@ -29,17 +29,24 @@ gradSchemes
 
 divSchemes
 {
-    default         none;
+    default         none;   // force explicit specification — catches typos
 
-    div(phi,U)      bounded Gauss linearUpwind grad(U);
-    div(phi,k)      bounded Gauss upwind;
-    div(phi,omega)  bounded Gauss upwind;
-    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+    // Momentum: bounded linearUpwind (2nd-order upwind-biased)
+    div(phi,U)                          bounded Gauss linearUpwind grad(U);
+
+    // SA transported variable
+    div(phi,k)                          bounded Gauss linearUpwind grad(nuTilda);
+    div(phi,omega)                      bounded Gauss linearUpwind grad(nuTilda);
+    div(phi,nuTilda)                    bounded Gauss linearUpwind grad(nuTilda);
+
+    // Viscous stress tensor: Gauss linear is standard for Laplacian-type terms
+    div((nuEff*dev2(T(grad(U)))))       Gauss linear;
 }
 
 laplacianSchemes
 {
-    default         Gauss linear corrected;
+    default                             Gauss linear corrected;
+    laplacian(DnuTildaEff,nuTilda)     Gauss linear corrected;
 }
 
 interpolationSchemes

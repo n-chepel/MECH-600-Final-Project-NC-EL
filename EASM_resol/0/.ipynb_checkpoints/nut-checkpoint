@@ -34,8 +34,11 @@ boundaryField
 
     ground
     {
-        type            nutkWallFunction;
-        value           uniform 0;
+        type    nutkWallFunction;
+        Cmu     0.09;
+        kappa   0.41;
+        E       9.8;
+        value   uniform 0;
     }
 
     top
@@ -55,8 +58,11 @@ boundaryField
 
     ahmed_body
     {
-        type            nutkWallFunction;
-        value           uniform 0;
+        type    nutkWallFunction;
+        Cmu     0.09;
+        kappa   0.41;
+        E       9.8;
+        value   uniform 0;
     }
 }
 

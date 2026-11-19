@@ -14,43 +14,32 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-ddtSchemes
-{
-    default         steadyState;
-}
+ddtSchemes   { default steadyState; }
 
 gradSchemes
 {
-    default         Gauss linear;
-    grad(U)         cellLimited Gauss linear 1;
-    grad(k)         cellLimited Gauss linear 1;
-    grad(omega)     cellLimited Gauss linear 1;
+    default     Gauss linear;
+    grad(U)     Gauss linear;
+    grad(k)     Gauss linear;
+    grad(epsilon) Gauss linear;
 }
 
 divSchemes
 {
     default         none;
+    div(phi,U)      Gauss linearUpwind grad(U);
+    div(phi,k)      Gauss upwind;
+    div(phi,epsilon) Gauss upwind;
+    div(nonlinearStress)  Gauss linear;
 
-    div(phi,U)      bounded Gauss linearUpwind grad(U);
-    div(phi,k)      bounded Gauss upwind;
-    div(phi,omega)  bounded Gauss upwind;
+    // Viscous stress divergence — use dev2 in OF5+ Foundation / ESI:
     div((nuEff*dev2(T(grad(U))))) Gauss linear;
+    // For older OF (pre-v5): div((nuEff*dev(T(grad(U))))) Gauss linear;
 }
 
-laplacianSchemes
-{
-    default         Gauss linear corrected;
-}
-
-interpolationSchemes
-{
-    default         linear;
-}
-
-snGradSchemes
-{
-    default         corrected;
-}
+laplacianSchemes { default Gauss linear corrected; }
+interpolationSchemes { default linear; }
+snGradSchemes    { default corrected; }
 
 wallDist
 {
