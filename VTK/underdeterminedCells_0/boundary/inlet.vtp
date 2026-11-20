@@ -1,0 +1,60 @@
+<?xml version='1.0'?>
+<!-- patch='inlet' time='0' index='0' -->
+<VTKFile type='PolyData' version='0.1' byte_order='LittleEndian' header_type='UInt64'>
+  <PolyData>
+    <FieldData>
+      <DataArray type='Float32' Name='TimeValue' NumberOfTuples='1' format='binary'>
+BAAAAAAAAAAAAAAA
+      </DataArray>
+    </FieldData>
+    <Piece NumberOfPoints='14' NumberOfPolys='6'>
+      <Points>
+        <DataArray type='Float32' Name='Points' NumberOfComponents='3' format='binary'>
+qAAAAAAAAAAAAKDACtejOxe3UToAAKDACtejOwAAAAAAAKDACtejuwAAAAAAAKDACtejuxe3UToAAKDACtejO3Iz3DoAAKDACteju3Iz3DoAAKDACtejOxGKLTsAAKDACtejuxGKLTsAAKDACtejO3NSczsAAKDACteju3NSczsAAKDACtejO6IKoDsAAKDACteju6IKoDsAAKDACtejO5VCyjsAAKDACteju5VCyjs=
+        </DataArray>
+      </Points>
+      <Polys>
+        <DataArray type='Int32' Name='connectivity' format='binary'>
+YAAAAAAAAAAAAAAAAQAAAAIAAAADAAAABAAAAAAAAAADAAAABQAAAAYAAAAEAAAABQAAAAcAAAAIAAAABgAAAAcAAAAJAAAACgAAAAgAAAAJAAAACwAAAAwAAAAKAAAACwAAAA0AAAA=
+        </DataArray>
+        <DataArray type='Int32' Name='offsets' format='binary'>
+GAAAAAAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAA=
+        </DataArray>
+      </Polys>
+      <CellData>
+        <DataArray type='Float32' Name='k' format='binary'>
+GAAAAAAAAACPwnU+j8J1Po/CdT6PwnU+j8J1Po/CdT4=
+        </DataArray>
+        <DataArray type='Float32' Name='nut' format='binary'>
+GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+        </DataArray>
+        <DataArray type='Float32' Name='omega' format='binary'>
+GAAAAAAAAAAAALRCAAC0QgAAtEIAALRCAAC0QgAAtEI=
+        </DataArray>
+        <DataArray type='Float32' Name='p' format='binary'>
+GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+        </DataArray>
+        <DataArray type='Float32' Name='U' NumberOfComponents='3' format='binary'>
+SAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAA=
+        </DataArray>
+      </CellData>
+      <PointData>
+        <DataArray type='Float32' Name='k' format='binary'>
+OAAAAAAAAACPwnU+j8J1Po/CdT6PwnU+j8J1Po/CdT6PwnU+j8J1Po/CdT6PwnU+j8J1Po/CdT6PwnU+j8J1Pg==
+        </DataArray>
+        <DataArray type='Float32' Name='nut' format='binary'>
+OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        </DataArray>
+        <DataArray type='Float32' Name='omega' format='binary'>
+OAAAAAAAAAAAALRCAAC0QgAAtEIAALRCAAC0QgAAtEIAALRCAAC0QgAAtEIAALRCAAC0QgAAtEIAALRCAAC0Qg==
+        </DataArray>
+        <DataArray type='Float32' Name='p' format='binary'>
+OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+        </DataArray>
+        <DataArray type='Float32' Name='U' NumberOfComponents='3' format='binary'>
+qAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAAAACBCAAAAAAAAAAA=
+        </DataArray>
+      </PointData>
+    </Piece>
+  </PolyData>
+</VTKFile>

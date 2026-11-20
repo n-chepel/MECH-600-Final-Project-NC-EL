@@ -1,0 +1,26 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      changeDictionaryDict;
+}
+
+dictionaryReplacement
+{
+    frontAndBack
+    {
+        type            empty;
+        inGroups        List<word> 1(empty);
+    }
+    ground
+    {
+        type            wall;
+        inGroups        List<word> 1(wall);
+    }
+    ahmed_body
+    {
+        type            wall;
+        inGroups        List<word> 1(wall);
+    }
+}
