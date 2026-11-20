@@ -1,3 +1,21 @@
+# To run meshing code:
+
+python generate_ahmed_2d.py \
+    --mesh-level normal \
+    --wall-treatment wall-functions
+
+gmsh ahmed_body_2d_normal_wall_functions.geo -3
+
+rm -rf constant/polyMesh
+
+gmshToFoam ahmed_body_2d_normal_wall_functions.msh
+
+bash fix_mesh.sh
+
+checkMesh -allGeometry -allTopology
+
+
+
 # Ahmed Body Aerodynamics
 
 ![Difficulty: Advanced](https://img.shields.io/badge/difficulty-advanced-red)
