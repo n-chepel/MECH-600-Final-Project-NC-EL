@@ -1,0 +1,105 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2412                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    arch        "LSB;label=32;scalar=64";
+    class       dictionary;
+    location    "3000/uniform/functionObjects";
+    object      functionObjectProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+cdf7e925f5746741c316f5fbcf39ad0dfca90775
+{
+    forceCoeffs
+    {
+        scalar
+        {
+            Cd              0.3100618602937095;
+            CdPressure      0.2737458157680833;
+            CdViscous       0.03631604452562617;
+            CdInternal      0;
+            Cd(f)           0.1554247749247451;
+            Cd(f)Pressure   0.1372701929143809;
+            Cd(f)Viscous    0.01815458201036418;
+            Cd(f)Internal   0;
+            Cd(r)           0.1546370853689644;
+            Cd(r)Pressure   0.1364756228537024;
+            Cd(r)Viscous    0.018161462515262;
+            Cd(r)Internal   0;
+            Cl              0.1315030064979301;
+            ClPressure      0.1307560261244382;
+            ClViscous       0.000746980373491903;
+            ClInternal      0;
+            Cl(f)           -0.03153751667602105;
+            Cl(f)Pressure   -0.03125738992891455;
+            Cl(f)Viscous    -0.0002801267471064908;
+            Cl(f)Internal   0;
+            Cl(r)           0.1630405231739511;
+            Cl(r)Pressure   0.1620134160533527;
+            Cl(r)Viscous    0.001027107120598394;
+            Cl(r)Internal   0;
+            CmPitch         -0.09728901992498606;
+            CmPitchPressure -0.09663540299113363;
+            CmPitchViscous  -0.0006536169338524423;
+            CmPitchInternal 0;
+            CmRoll          0.0003938447778903363;
+            CmRollPressure  0.0003972850303392458;
+            CmRollViscous   -3.440252448909525e-06;
+            CmRollInternal  0;
+            CmYaw           -7.014013448374708e-06;
+            CmYawPressure   -2.653568561202447e-05;
+            CmYawViscous    1.952167216364976e-05;
+            CmYawInternal   0;
+            Cs              0.0008896311939821658;
+            CsPressure      0.0008409785715818447;
+            CsViscous       4.86526224003211e-05;
+            CsInternal      0;
+            Cs(f)           0.0004378015835427082;
+            Cs(f)Pressure   0.0003939536001788979;
+            Cs(f)Viscous    4.38479833638103e-05;
+            Cs(f)Internal   0;
+            Cs(r)           0.0004518296104394576;
+            Cs(r)Pressure   0.0004470249714029468;
+            Cs(r)Viscous    4.804639036510791e-06;
+            Cs(r)Internal   0;
+        }
+    }
+    fieldResiduals
+    {
+        scalar
+        {
+            Ux_initial      0.00036101951;
+            Ux_final        2.1547891e-06;
+            Uy_initial      0.011605943;
+            Uy_final        6.6616871e-05;
+            Uz_initial      0.0038845283;
+            Uz_final        2.3912352e-05;
+            k_initial       0.00045443687;
+            k_final         2.3517626e-06;
+            omega_initial   2.0148484e-05;
+            omega_final     7.753785899999999e-08;
+            p_initial       0.004028279;
+            p_final         1.8396668e-05;
+        }
+        label
+        {
+            Ux_iters        4;
+            Uy_iters        4;
+            Uz_iters        4;
+            k_iters         4;
+            omega_iters     4;
+            p_iters         5;
+        }
+    }
+}
+
+
+// ************************************************************************* //
