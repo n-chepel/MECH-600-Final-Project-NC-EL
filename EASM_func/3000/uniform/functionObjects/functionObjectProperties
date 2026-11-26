@@ -72,6 +72,33 @@ cdf7e925f5746741c316f5fbcf39ad0dfca90775
             Cs(r)Internal   0;
         }
     }
+    fieldResiduals
+    {
+        scalar
+        {
+            Ux_initial      2.4446706e-05;
+            Ux_final        1.1784346e-06;
+            Uy_initial      0.001098213;
+            Uy_final        6.0189248e-05;
+            Uz_initial      0.00048082763;
+            Uz_final        2.5783148e-05;
+            epsilon_initial 8.2134026e-06;
+            epsilon_final   4.3713214e-07;
+            k_initial       1.7288296e-05;
+            k_final         1.242895e-06;
+            p_initial       0.0011278149;
+            p_final         9.343402900000001e-05;
+        }
+        label
+        {
+            Ux_iters        4;
+            Uy_iters        4;
+            Uz_iters        4;
+            epsilon_iters   2;
+            k_iters         2;
+            p_iters         2;
+        }
+    }
 }
 
 

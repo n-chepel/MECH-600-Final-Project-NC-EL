@@ -6,7 +6,7 @@
 #SBATCH --mem=8G        # memory per rank
 #SBATCH --output=%x-%j.out      # log file named <job-name>-<jobid>.out
 
-
+python3 generate_ahmed_body.py
 
 module load openfoam/v2412      # make the OpenFOAM commands available
 

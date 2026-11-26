@@ -1,0 +1,315 @@
+Ahmed body STL written to constant/triSurface/ahmed_body.stl
+  Slant angle: 25.0°
+  Nose radius: 0.1 m
+  Triangles:   116
+  Volume:      0.110744 m3
+Lmod Warning:
+-------------------------------------------------------------------------------
+The following dependent module(s) are not currently loaded: ipykernel/2026a
+(required by: ipython-kernel/3.11)
+-------------------------------------------------------------------------------
+
+
+
+
+The following have been reloaded with a version change:
+  1) hdf5-mpi/1.14.6 => hdf5-mpi/1.14.2
+  2) ipykernel/2025a => ipykernel/2023b
+  3) paraview/6.0.0 => paraview/5.11.2
+  4) qt/6.5.3 => qt/5.15.11
+  5) scipy-stack/2025a => scipy-stack/2023b
+
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2412                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : v2412 OPENFOAM=2412 version=v2412
+Arch   : "LSB;label=32;scalar=64"
+Exec   : blockMesh
+Date   : Nov 21 2026
+Time   : 17:57:11
+Host   : cpupool2.int.mech501.calculquebec.cloud
+PID    : 60046
+I/O    : uncollated
+Case   : /scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func
+nProcs : 1
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Creating block mesh from "system/blockMeshDict"
+Creating block edges
+No non-planar block faces defined
+Creating topology blocks
+
+Creating topology patches - from boundary section
+
+Creating block mesh topology
+
+Check topology
+
+	Basic statistics
+		Number of internal faces : 0
+		Number of boundary faces : 6
+		Number of defined boundary faces : 6
+		Number of undefined boundary faces : 0
+	Checking patch -> block consistency
+
+Creating block offsets
+Creating merge list (topological search)...
+Deleting polyMesh directory "constant/polyMesh"
+
+Creating polyMesh from blockMesh
+Creating patches
+Creating cells
+Creating points with scale (1 1 1)
+    Block 0 cell size :
+        i : 0.2 .. 0.2
+        j : 0.2 .. 0.2
+        k : 0.2 .. 0.2
+
+No patch pairs to merge
+
+Writing polyMesh with 0 cellZones
+----------------
+Mesh Information
+----------------
+  boundingBox: (-5 -5 0) (12 5 5)
+  nPoints: 114036
+  nCells: 106250
+  nFaces: 326375
+  nInternalFaces: 311125
+----------------
+Patches
+----------------
+  patch 0 (start: 311125 size: 1250) name: inlet
+  patch 1 (start: 312375 size: 1250) name: outlet
+  patch 2 (start: 313625 size: 4250) name: ground
+  patch 3 (start: 317875 size: 4250) name: top
+  patch 4 (start: 322125 size: 2125) name: side_left
+  patch 5 (start: 324250 size: 2125) name: side_right
+
+End
+
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2412                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : v2412 OPENFOAM=2412 version=v2412
+Arch   : "LSB;label=32;scalar=64"
+Exec   : surfaceFeatureExtract
+Date   : Nov 21 2026
+Time   : 17:57:12
+Host   : cpupool2.int.mech501.calculquebec.cloud
+PID    : 60047
+I/O    : uncollated
+Case   : /scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func
+nProcs : 1
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+
+Note: Feature line extraction only valid on closed manifold surfaces
+
+Reading surfaceFeatureExtractDict
+
+Surfaces     : ahmed_body.stl
+Output       : ahmed_body
+Load options : offset
+Write options: writeObj=yes writeVTK=off
+
+Statistics:
+Triangles    : 116 in 1 region(s)
+Vertices     : 60
+Bounding Box : (0 -0.1945 0.050000001) (1.044 0.1945 0.338)
+
+Constructing feature set from included angle 170
+Selecting edges based purely on geometric tests: no
+
+Initial Feature set:
+    points : 10
+    edges  : 57
+    of which
+        region edges   : 0
+        external edges : 57
+        internal edges : 0
+
+Final Feature set:
+    points : 56
+    of which
+        convex             : 10
+        concave            : 0
+        mixed              : 0
+        non-feature        : 46
+    edges  : 57
+    of which
+        external edges     : 57
+        internal edges     : 0
+        flat edges         : 0
+        open edges         : 0
+        multiply connected : 0
+
+Writing extendedFeatureEdgeMesh to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body.extendedFeatureEdgeMesh"
+
+Writing extendedEdgeMesh components to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body"
+Writing 10 convex feature points to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_convexFeaturePts.obj"
+Writing 0 concave feature points to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_concaveFeaturePts.obj"
+Writing 0 mixed feature points to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_mixedFeaturePts.obj"
+Writing 0 mixed feature point structure to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_mixedFeaturePtsStructure.obj"
+Writing 57 external edges to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_externalEdges.obj"
+Writing 0 internal edges to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_internalEdges.obj"
+Writing 0 flat edges to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_flatEdges.obj"
+Writing 0 open edges to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_openEdges.obj"
+Writing 0 multiple edges to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_multipleEdges.obj"
+Writing 0 region edges to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_regionEdges.obj"
+Writing 57 edge directions to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/extendedFeatureEdgeMesh/ahmed_body_edgeDirections.obj"
+
+Writing featureEdgeMesh to "/scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func/constant/triSurface/ahmed_body.eMesh"
+ExecutionTime = 0.01 s  ClockTime = 0 s
+
+End
+
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2412                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : v2412 OPENFOAM=2412 version=v2412
+Arch   : "LSB;label=32;scalar=64"
+Exec   : decomposePar -force
+Date   : Nov 21 2026
+Time   : 17:57:12
+Host   : cpupool2.int.mech501.calculquebec.cloud
+PID    : 60048
+I/O    : uncollated
+Case   : /scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func
+nProcs : 1
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+
+
+Decomposing mesh
+
+Create mesh
+
+Calculating distribution of cells
+Decomposition method scotch [4] (region region0)
+
+Finished decomposition in 0.25 s
+
+Calculating original mesh data
+
+Distributing cells to processors
+
+Distributing faces to processors
+
+Distributing points to processors
+
+Constructing processor meshes
+
+Processor 0
+    Number of cells = 26400
+    Number of points = 29250
+    Number of faces shared with processor 1 = 1025
+    Number of faces shared with processor 2 = 75
+    Number of faces shared with processor 3 = 600
+    Number of processor patches = 3
+    Number of processor faces = 1700
+    Number of boundary faces = 3812
+
+Processor 1
+    Number of cells = 26650
+    Number of points = 29484
+    Number of faces shared with processor 0 = 1025
+    Number of faces shared with processor 2 = 650
+    Number of processor patches = 2
+    Number of processor faces = 1675
+    Number of boundary faces = 3807
+
+Processor 2
+    Number of cells = 26575
+    Number of points = 29484
+    Number of faces shared with processor 0 = 75
+    Number of faces shared with processor 1 = 650
+    Number of faces shared with processor 3 = 1075
+    Number of processor patches = 3
+    Number of processor faces = 1800
+    Number of boundary faces = 3826
+
+Processor 3
+    Number of cells = 26625
+    Number of points = 29458
+    Number of faces shared with processor 0 = 600
+    Number of faces shared with processor 2 = 1075
+    Number of processor patches = 2
+    Number of processor faces = 1675
+    Number of boundary faces = 3805
+
+Number of processor faces = 3425
+Max number of cells = 26650 (0.32941176% above average 26562.5)
+Max number of processor patches = 3 (20% above average 2.5)
+Max number of faces between processors = 1800 (5.1094891% above average 1712.5)
+
+Time = 0
+
+Processor 0: field transfer
+Processor 1: field transfer
+Processor 2: field transfer
+Processor 3: field transfer
+
+End
+
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2412                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : v2412 OPENFOAM=2412 version=v2412
+Arch   : "LSB;label=32;scalar=64"
+Exec   : snappyHexMesh -overwrite -parallel
+Date   : Nov 21 2026
+Time   : 17:57:14
+Host   : cpupool2.int.mech501.calculquebec.cloud
+PID    : 60053
+I/O    : uncollated
+Case   : /scratch/edmlu/MECH-600-Final-Project-NC-EL/SA_func
+nProcs : 4
+Hosts  :
+(
+    (cpupool2.int.mech501.calculquebec.cloud 4)
+)
+Pstream initialized with:
+    floatTransfer      : false
+    maxCommsSize       : 0
+    nProcsSimpleSum    : 0
+    nonBlockingExchange: 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
